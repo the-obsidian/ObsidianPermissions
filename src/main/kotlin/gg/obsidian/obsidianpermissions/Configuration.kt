@@ -23,8 +23,9 @@ class Configuration(val plugin: Plugin) {
             }
 
             if (definition.contains("permissions")) {
-                val list = definition as List<String>
-                permissions.addAll(list.asSequence())
+                val hashmap = definition as LinkedHashMap<String, Any>
+                val list = hashmap.values as MutableCollection<String>
+                permissions.addAll(list)
             }
 
             if (name == null) continue
@@ -36,5 +37,11 @@ class Configuration(val plugin: Plugin) {
 
     fun getGroupNames(): List<String> {
         return GROUPS.map { it.name }
+    }
+
+    fun getGroup(name: String): Group? {
+        val results = GROUPS.filter { it.name.equals(name) }
+        if (results.size == 0) return null
+        return results[0]
     }
 }

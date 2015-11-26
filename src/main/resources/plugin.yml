@@ -1,8 +1,11 @@
-name: DiscordBridge
+name: ObsidianPermissions
 version: ${project.version}
 description: ${project.description}
+load: STARTUP
+# dependencies: [Vault]
 
 author: Jacob Gillespie
 website: ${project.url}
 
 main: gg.obsidian.obsidianpermissions.Plugin
+database: true

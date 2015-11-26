@@ -1,13 +1,21 @@
 package gg.obsidian.obsidianpermissions
 
+import gg.obsidian.obsidianpermissions.models.Group
+import gg.obsidian.obsidianpermissions.models.GroupMembership
+import gg.obsidian.obsidianpermissions.models.GroupMembershipTable
 import net.milkbowl.vault.permission.Permission
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
+import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent
 import org.bukkit.event.player.PlayerJoinEvent
+import org.bukkit.event.player.PlayerLoginEvent
+import org.bukkit.event.player.PlayerQuitEvent
 import org.bukkit.plugin.ServicePriority
 import org.bukkit.plugin.java.JavaPlugin
+import java.util.*
+import javax.persistence.PersistenceException
 
 class Plugin : JavaPlugin(), Listener {
 
@@ -15,9 +23,12 @@ class Plugin : JavaPlugin(), Listener {
     val PLAYER_METADATA_KEY = "ObsidianPermissions.PlayerState"
 
     val configuration = Configuration(this)
+    val manager = Manager(this)
+    val groupMembershipTable = GroupMembershipTable(this)
 
     override fun onEnable() {
         loadConfig(description.version)
+        setupDatabase()
 
         server.pluginManager.registerEvents(this, this)
 
@@ -30,15 +41,38 @@ class Plugin : JavaPlugin(), Listener {
 
     // Event Listeners
 
-    @EventHandler
-    fun onPlayerPreLogin(event: AsyncPlayerPreLoginEvent) {
-        // preload the cache
+    @EventHandler(priority = EventPriority.MONITOR)
+    fun onAsyncPlayerPreLogin(event: AsyncPlayerPreLoginEvent) {
+        if (event.loginResult != AsyncPlayerPreLoginEvent.Result.ALLOWED) return
+        // manager.UpdateDisplayName(event.uniqueId, event.name)
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.LOWEST)
+    fun onPlayerLogin(event: PlayerLoginEvent) {
+        logDebug("${event.player.name} logged in")
+        manager.setPermissions(event.player)
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    fun onPlayerLoginMonitor(event: PlayerLoginEvent) {
+        if (event.result != PlayerLoginEvent.Result.ALLOWED) {
+            logDebug("${event.player.name} is not allowed to log in")
+            manager.removePermissions(event.player)
+        }
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST)
     fun onPlayerJoin(event: PlayerJoinEvent) {
+        logDebug("${event.player.name} is joining")
         val uuid = event.player.uniqueId.toString()
-        injectPermissions(event.player)
+        manager.setPermissions(event.player)
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    fun onPlayerQuit(event: PlayerQuitEvent) {
+        logDebug("${event.player.name} is quitting")
+        manager.removePermissions(event.player)
+        // uuidResolver.preload(event.player.name, event.player.uniqueId)
     }
 
     // Utilities
@@ -51,39 +85,23 @@ class Plugin : JavaPlugin(), Listener {
         configuration.load()
     }
 
+    fun setupDatabase() {
+        try {
+            getDatabase().find(Group::class.java).findRowCount()
+        } catch (ex: PersistenceException) {
+            logger.info("First run, initializing database.")
+            installDDL()
+        }
+    }
+
+    override fun getDatabaseClasses(): ArrayList<Class<*>> {
+        val list = ArrayList<Class<*>>()
+        list.add(GroupMembership::class.java)
+        return list
+    }
+
     fun logDebug(msg: String) {
         if (!configuration.DEBUG) return;
         logger.info(msg)
     }
-
-    // Internal methods
-
-    fun injectPermissions(player: Player): Boolean {
-        val permName = PERMISSION_PREFIX + player.uniqueId.toString()
-        val perm = server.pluginManager.getPermission(permName)
-        val playerState = getPlayerState(player)
-        val hasPermissionAttachment = player.isPermissionSet(permName) && player.hasPermission(permName)
-
-        // No need to update
-        if (perm != null && playerState != null && hasPermissionAttachment) return false
-
-        logDebug("Updating permissions for ${player.name}")
-
-        val combinedPermissions = getCombinedPermissionsFor(player)
-
-        return false
-    }
-
-    private fun getPlayerState(player: Player): PlayerState? {
-        for (mv in player.getMetadata(PLAYER_METADATA_KEY)) {
-            if (mv.owningPlugin == this) {
-                return mv.value() as PlayerState
-            }
-        }
-        return null
-    }
-
-    private data class PlayerState(val world: String, val groups: Set<String>) {}
-
-    private fun getCombinedPermissionsFor(player: Player) {}
 }

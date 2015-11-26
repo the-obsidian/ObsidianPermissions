@@ -3,7 +3,6 @@ package gg.obsidian.obsidianpermissions
 import net.milkbowl.vault.permission.Permission
 import org.bukkit.OfflinePlayer
 import org.bukkit.entity.Player
-import java.util.*
 
 class OPVault(val opPlugin: Plugin) : Permission() {
 
@@ -28,7 +27,8 @@ class OPVault(val opPlugin: Plugin) : Permission() {
     }
 
     override fun groupHas(world: String, name: String, permission: String): Boolean {
-        return false
+        val group = opPlugin.manager.getGroup(name) ?: return false
+        return group.permissions.contains(permission)
     }
 
     override fun groupAdd(world: String, name: String, permission: String): Boolean {
@@ -63,28 +63,24 @@ class OPVault(val opPlugin: Plugin) : Permission() {
         return false
     }
 
-    override fun playerRemove(world: String, player: OfflinePlayer, permission: String): Boolean {
-        return false
-    }
-
     override fun playerInGroup(world: String, player: OfflinePlayer, group: String): Boolean {
-        return false
+        return opPlugin.manager.getPlayerGroups(player as Player).contains(group)
     }
 
     override fun playerAddGroup(world: String, player: OfflinePlayer, group: String): Boolean {
-        return false
+        return opPlugin.manager.addToGroup(player as Player, group)
     }
 
     override fun playerRemoveGroup(world: String, player: OfflinePlayer, group: String): Boolean {
-        return false
+        return opPlugin.manager.removeFromGroup(player as Player, group)
     }
 
     override fun getPlayerGroups(world: String, player: OfflinePlayer): Array<out String>? {
-        return ArrayList<String>().toTypedArray()
+        return opPlugin.manager.getPlayerGroups(player as Player).toTypedArray()
     }
 
     override fun getPrimaryGroup(world: String, player: OfflinePlayer): String {
-        return ""
+        return "default"
     }
 
     // Deprecated
