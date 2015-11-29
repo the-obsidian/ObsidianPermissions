@@ -120,12 +120,38 @@ class Manager(val plugin: Plugin) {
     private fun getCombinedPermissionsFor(player: Player): Map<String, Boolean> {
         val finalMap = HashMap<String, Boolean>()
         val groups = plugin.groupMembershipTable.getPlayerGroups(player)
+        val appliedGroups = HashSet<Group>()
+
         for (group in groups) {
-            for (permission in group.permissions) {
+            val permissions = resolveGroupPermissions(group, appliedGroups) ?: continue
+            for (permission in permissions) {
                 finalMap.put(permission, true)
             }
+            appliedGroups.add(group)
         }
         return finalMap
+    }
+
+    private fun resolveGroupPermissions(
+            group: Group,
+            appliedGroups: MutableSet<Group> = HashSet<Group>()
+    ): Set<String>? {
+        if (appliedGroups.contains(group)) return null
+
+        if (group.extends.size == 0) return group.permissions
+
+        val permissions = HashSet<String>()
+        permissions.addAll(group.permissions)
+        appliedGroups.add(group)
+
+        for (groupName in group.extends) {
+            val subGroup = getGroup(groupName) ?: continue
+            val subPermissions = resolveGroupPermissions(subGroup, appliedGroups) ?: continue
+            permissions.addAll(subPermissions)
+            appliedGroups.add(group)
+        }
+
+        return permissions
     }
 
     private fun getDisplayNameTemplate(player: Player): String {

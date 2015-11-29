@@ -19,6 +19,7 @@ class Configuration(val plugin: Plugin) {
             var displayName: String? = null
             var rank = 10;
             val permissions = HashSet<String>()
+            val extends = HashSet<String>()
 
             if (definition.contains("name")) {
                 name = definition["name"] as String
@@ -37,13 +38,19 @@ class Configuration(val plugin: Plugin) {
                 permissions.addAll(hashmap)
             }
 
+            if (definition.contains("extends")) {
+                val hashmap = definition["extends"] as ArrayList<String>
+                extends.addAll(hashmap)
+            }
+
             if (name == null) continue
 
             val group = Group(
                     name = name,
                     rank = rank,
                     permissions = permissions,
-                    displayNameTemplate = displayName
+                    displayNameTemplate = displayName,
+                    extends = extends
             )
             GROUPS.add(group)
         }
