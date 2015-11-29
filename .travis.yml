@@ -10,4 +10,4 @@ deploy:
   file_glob: true
   on:
     repo: the-obsidian/ObsidianPermissions
-    # tags: true
+    tags: true
