@@ -13,6 +13,7 @@ import org.bukkit.event.player.PlayerLoginEvent
 import org.bukkit.event.player.PlayerQuitEvent
 import org.bukkit.plugin.ServicePriority
 import org.bukkit.plugin.java.JavaPlugin
+import java.io.File
 import java.util.*
 import javax.persistence.PersistenceException
 
@@ -77,8 +78,11 @@ class Plugin : JavaPlugin(), Listener {
     // Utilities
 
     fun loadConfig(version: String) {
-        this.saveDefaultConfig()
-        config.options().copyDefaults(true)
+        val configFile = File(dataFolder, "config.yml")
+        if (!configFile.exists()) {
+            config.options().copyDefaults(true)
+            saveConfig()
+        }
         config.set("version", version)
         saveConfig()
         configuration.load()

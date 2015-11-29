@@ -1,6 +1,7 @@
 package gg.obsidian.obsidianpermissions
 
 import gg.obsidian.obsidianpermissions.models.Group
+import org.bukkit.ChatColor
 import org.bukkit.entity.Player
 import org.bukkit.metadata.FixedMetadataValue
 import org.bukkit.permissions.Permission
@@ -47,6 +48,8 @@ class Manager(val plugin: Plugin) {
             player.addAttachment(plugin, perm.name, true);
         }
 
+        setDisplayName(player)
+
         return true
     }
 
@@ -92,6 +95,15 @@ class Manager(val plugin: Plugin) {
         return plugin.configuration.getGroup(name)
     }
 
+    fun setDisplayName(player: Player) {
+        var template = getDisplayNameTemplate(player)
+        if (template.contains("%p")) {
+            template = template.replace("%p", player.name)
+        }
+        val colorizedName = ChatColor.translateAlternateColorCodes('&', template)
+        player.displayName = colorizedName
+    }
+
     // Private functions
 
     private fun getPlayerState(player: Player): PlayerState? {
@@ -114,5 +126,13 @@ class Manager(val plugin: Plugin) {
             }
         }
         return finalMap
+    }
+
+    private fun getDisplayNameTemplate(player: Player): String {
+        val groups = getPlayerGroups(player)
+        for (group in groups) {
+            if (group.displayNameTemplate != null) return group.displayNameTemplate
+        }
+        return "%p"
     }
 }
