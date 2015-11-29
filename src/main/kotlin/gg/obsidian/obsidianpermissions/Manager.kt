@@ -22,7 +22,7 @@ class Manager(val plugin: Plugin) {
 
         plugin.logDebug("Updating permissions for ${player.name}")
 
-        val playerGroups = getPlayerGroups(player)
+        val playerGroups = getPlayerGroupNames(player)
         val combinedPermissions = getCombinedPermissionsFor(player)
 
         // Create combined permission for player
@@ -64,15 +64,28 @@ class Manager(val plugin: Plugin) {
     }
 
     fun addToGroup(player: Player, groupName: String): Boolean {
-        return plugin.groupMembershipTable.addPlayerToGroup(player, groupName)
+        plugin.groupMembershipTable.addPlayerToGroup(player, groupName)
+        setPermissions(player, true)
+        return true
     }
 
     fun removeFromGroup(player: Player, groupName: String): Boolean {
-        return plugin.groupMembershipTable.removePlayerFromGroup(player, groupName)
+        plugin.groupMembershipTable.removePlayerFromGroup(player, groupName)
+        return setPermissions(player, true)
     }
 
-    fun getPlayerGroups(player: Player): Set<String> {
-        return plugin.groupMembershipTable.getPlayerGroups(player).map { it.name }.toSet()
+    fun getPlayerGroups(player: Player): List<Group> {
+        return plugin.groupMembershipTable.getPlayerGroups(player).sortedByDescending { it.rank }
+    }
+
+    fun getPlayerGroupNames(player: Player): List<String> {
+        return getPlayerGroups(player).map { it.name }
+    }
+
+    fun getPlayerDefaultGroup(player: Player): String? {
+        val groupNames = getPlayerGroupNames(player)
+        if (groupNames.size == 0) return null
+        return groupNames.first()
     }
 
     fun getGroup(name: String): Group? {
@@ -90,13 +103,16 @@ class Manager(val plugin: Plugin) {
         return null
     }
 
-    private data class PlayerState(var groups: Set<String>) {}
+    private data class PlayerState(var groups: List<String>) {}
 
     private fun getCombinedPermissionsFor(player: Player): Map<String, Boolean> {
-        val groups = plugin.groupMembershipTable.getPlayerGroups(player)
-        val combined: Set<String> = groups.fold(HashSet<String>()) { a: Set<String>, b -> a.intersect(b.permissions) }
         val finalMap = HashMap<String, Boolean>()
-        combined.forEach { finalMap.put(it, true) }
+        val groups = plugin.groupMembershipTable.getPlayerGroups(player)
+        for (group in groups) {
+            for (permission in group.permissions) {
+                finalMap.put(permission, true)
+            }
+        }
         return finalMap
     }
 }

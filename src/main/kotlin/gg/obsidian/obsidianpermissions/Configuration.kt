@@ -16,21 +16,25 @@ class Configuration(val plugin: Plugin) {
         for (rawDefinition in plugin.config.getMapList("groups")) {
             val definition = rawDefinition as Map<String, Any>
             var name: String? = null
+            var rank = 10;
             val permissions = HashSet<String>()
 
             if (definition.contains("name")) {
                 name = definition["name"] as String
             }
 
+            if (definition.contains("rank")) {
+                rank = definition["rank"] as Int
+            }
+
             if (definition.contains("permissions")) {
-                val hashmap = definition as LinkedHashMap<String, Any>
-                val list = hashmap.values as MutableCollection<String>
-                permissions.addAll(list)
+                val hashmap = definition["permissions"] as ArrayList<String>
+                permissions.addAll(hashmap)
             }
 
             if (name == null) continue
 
-            val group = Group(name, permissions)
+            val group = Group(name, rank, permissions)
             GROUPS.add(group)
         }
     }

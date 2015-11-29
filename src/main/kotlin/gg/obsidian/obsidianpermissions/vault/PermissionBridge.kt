@@ -1,10 +1,10 @@
-package gg.obsidian.obsidianpermissions
+package gg.obsidian.obsidianpermissions.vault
 
-import net.milkbowl.vault.permission.Permission
+import gg.obsidian.obsidianpermissions.Plugin
 import org.bukkit.OfflinePlayer
 import org.bukkit.entity.Player
 
-class OPVault(val opPlugin: Plugin) : Permission() {
+class PermissionBridge(val opPlugin: Plugin) : PermissionCompatibility() {
 
     override fun getName(): String {
         return opPlugin.name
@@ -76,57 +76,10 @@ class OPVault(val opPlugin: Plugin) : Permission() {
     }
 
     override fun getPlayerGroups(world: String, player: OfflinePlayer): Array<out String>? {
-        return opPlugin.manager.getPlayerGroups(player as Player).toTypedArray()
+        return opPlugin.manager.getPlayerGroupNames(player as Player).toTypedArray()
     }
 
     override fun getPrimaryGroup(world: String, player: OfflinePlayer): String {
-        return "default"
-    }
-
-    // Deprecated
-
-    @SuppressWarnings("deprecation")
-    private fun pFromName(name: String): OfflinePlayer {
-        return plugin.server.getOfflinePlayer(name)
-    }
-
-    override fun playerHas(world: String, name: String, permission: String): Boolean {
-        return playerHas(world, pFromName(name), permission)
-    }
-
-    override fun playerAdd(world: String, name: String, permission: String): Boolean {
-        return playerAdd(world, pFromName(name), permission)
-    }
-
-    override fun playerRemove(world: String, name: String, permission: String): Boolean {
-        return playerRemove(world, pFromName(name), permission)
-    }
-
-    override fun playerInGroup(world: String, name: String, group: String): Boolean {
-        return playerInGroup(world, pFromName(name), group)
-    }
-
-    override fun playerAddGroup(world: String, name: String, group: String): Boolean {
-        return playerAddGroup(world, pFromName(name), group)
-    }
-
-    override fun playerRemoveGroup(world: String, name: String, group: String): Boolean {
-        return playerRemoveGroup(world, pFromName(name), group)
-    }
-
-    override fun getPlayerGroups(world: String, name: String): Array<out String>? {
-        return getPlayerGroups(world, pFromName(name))
-    }
-
-    override fun getPrimaryGroup(world: String, name: String): String {
-        return getPrimaryGroup(world, pFromName(name))
-    }
-
-    override fun playerAddTransient(world: String, name: String, permission: String): Boolean {
-        return playerAddTransient(world, pFromName(name), permission)
-    }
-
-    override fun playerRemoveTransient(world: String, name: String, permission: String): Boolean {
-        return playerRemoveTransient(world, pFromName(name), permission)
+        return opPlugin.manager.getPlayerDefaultGroup(player as Player) ?: ""
     }
 }

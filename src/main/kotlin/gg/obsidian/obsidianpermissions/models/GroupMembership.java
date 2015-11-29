@@ -1,10 +1,11 @@
 package gg.obsidian.obsidianpermissions.models;
 
 import com.avaje.ebean.validation.NotNull;
-import java.util.*;
+
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import java.util.UUID;
 
 @Entity
 @Table(name = "group_membership")
@@ -22,7 +23,8 @@ public class GroupMembership {
     @NotNull
     public String playerName;
 
-    public GroupMembership() {}
+    public GroupMembership() {
+    }
 
     public GroupMembership(String groupName, UUID playerUUID, String playerName) {
         this.groupName = groupName;

@@ -1,10 +1,9 @@
 package gg.obsidian.obsidianpermissions
 
-import gg.obsidian.obsidianpermissions.models.Group
 import gg.obsidian.obsidianpermissions.models.GroupMembership
 import gg.obsidian.obsidianpermissions.models.GroupMembershipTable
+import gg.obsidian.obsidianpermissions.vault.PermissionBridge
 import net.milkbowl.vault.permission.Permission
-import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
@@ -32,9 +31,9 @@ class Plugin : JavaPlugin(), Listener {
 
         server.pluginManager.registerEvents(this, this)
 
-        if (server.pluginManager.isPluginEnabled("Vault")) {
-            val vault = OPVault(this)
-            server.servicesManager.register(Permission::class.java, vault, this, ServicePriority.High)
+        if (server.pluginManager.getPlugin("Vault") != null) {
+            val vault = PermissionBridge(this)
+            server.servicesManager.register(Permission::class.java, vault, this, ServicePriority.Highest)
             logger.info("Hooked into Vault permissions interface")
         }
     }
@@ -64,7 +63,7 @@ class Plugin : JavaPlugin(), Listener {
     @EventHandler(priority = EventPriority.LOWEST)
     fun onPlayerJoin(event: PlayerJoinEvent) {
         logDebug("${event.player.name} is joining")
-        val uuid = event.player.uniqueId.toString()
+        // val uuid = event.player.uniqueId.toString()
         manager.setPermissions(event.player)
     }
 
@@ -87,7 +86,7 @@ class Plugin : JavaPlugin(), Listener {
 
     fun setupDatabase() {
         try {
-            getDatabase().find(Group::class.java).findRowCount()
+            getDatabase().find(GroupMembership::class.java).findRowCount()
         } catch (ex: PersistenceException) {
             logger.info("First run, initializing database.")
             installDDL()
