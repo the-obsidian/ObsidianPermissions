@@ -31,9 +31,9 @@ class GroupMembershipTable(val plugin: Plugin) {
     fun addPlayerToGroup(player: Player, groupName: String): Boolean {
         if (plugin.groupMembershipTable.playerInGroup(player, groupName)) return false
         val gm = GroupMembership(
-                groupName = groupName,
-                playerName = player.name,
-                playerUUID = player.uniqueId
+                groupName,
+                player.uniqueId,
+                player.name
         )
         plugin.database.save(gm)
         return true
