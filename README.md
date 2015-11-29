@@ -18,7 +18,17 @@ Custom permissions plugin for [Obsidian](https://obsidian.gg) - this is likely h
 ObsidianPermissions has several options that can be configured in the `config.yml` file:
 
 ```yaml
-
+groups:
+- name: default
+  permissions:
+  - bukkit.command.time.add
+  - bukkit.command.time.set
+  - minecraft.command.time
+- name: member
+  rank: 10
+  display_name: '&6[Member] &f%p'
+  extends:
+  - default
 ```
 
 ## Features
